@@ -1,0 +1,14 @@
+Needs .NET 4 Framework.
+
+Runs in the system tray. Add to Startup folder if you want it to
+start with Windows.
+
+Rotates using ctrl+alt+(arrow key).
+
+Up is the default orientation.
+Right is 90' clockwise.
+Left is 90' counter-clockwise.
+Down is 180'.
+
+The mouse and arrow keys will rotate to match the screen. There's an option 
+to disable either of these in the context menu.
