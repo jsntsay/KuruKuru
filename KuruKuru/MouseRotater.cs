@@ -53,6 +53,11 @@ namespace KuruKuru
             if (modifyMouse && nCode >= 0 && (MouseMessages)wParam == MouseMessages.WM_MOUSEMOVE)
             {
                 MSLLHOOKSTRUCT hookStruct = (MSLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(MSLLHOOKSTRUCT));
+
+                //ignore injected mouse events
+                if (hookStruct.flags == 0x01)
+                    return hook.CallNextHook(nCode, wParam, lParam);
+
                 int newX = hookStruct.pt.x;
                 int newY = hookStruct.pt.y;
                 //Console.WriteLine("now: " + hookStruct.pt.x + " , " + hookStruct.pt.y);

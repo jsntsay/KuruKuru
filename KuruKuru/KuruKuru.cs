@@ -63,6 +63,26 @@ namespace KuruKuru
             mainForm.ModifyOrientation();
         }
 
+        public static void DisplayKeyInfo(uint vk, uint sc, uint flags)
+        {
+            mainForm.DisplayKeyInfo(vk, sc, flags);
+        }
+
+        public static void DisplayMods(bool ctrl, bool alt, bool shift)
+        {
+            mainForm.DisplayMods(ctrl, alt, shift);
+        }
+
+        public static void DisplayKeyModInfo(uint vkm, uint scm)
+        {
+            mainForm.DisplayKeyModInfo(vkm, scm);
+        }
+
+        public static void DisplayMisc(string misc)
+        {
+            mainForm.DisplayMisc(misc);
+        }
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>

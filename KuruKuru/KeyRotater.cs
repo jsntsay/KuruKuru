@@ -56,8 +56,14 @@ namespace KuruKuru
             if (nCode >= 0)
             {
                 KBDLLHOOKSTRUCT hookStruct = (KBDLLHOOKSTRUCT)Marshal.PtrToStructure(lParam, typeof(KBDLLHOOKSTRUCT));
-                if ((KeyMessages)wParam == KeyMessages.WM_KEYDOWN)
+
+                //prevent hooks from injected keys from being processed by KuruKuru
+                if ((hookStruct.flags & 0x10) == 0x10)
+                    return hook.CallNextHook(nCode, wParam, lParam);
+
+                if ((KeyMessages)wParam == KeyMessages.WM_KEYDOWN || (KeyMessages)wParam == KeyMessages.WM_SYSKEYDOWN)
                 {
+                    KuruKuru.DisplayKeyInfo(hookStruct.vkCode, hookStruct.scanCode, hookStruct.flags);
                     switch (hookStruct.vkCode)
                     {
                         case VK_LCONTROL:
@@ -83,7 +89,7 @@ namespace KuruKuru
                                 ScreenRotater.Instance.Rotate(KuruKuru.Rotations.TOP);
                             else if (modifyKeys)
                             {
-                                ModifyArrowKey(VK_UP);
+                                ModifyArrowKey(VK_UP, true);
                                 return new IntPtr(1);
                             }
                             break;
@@ -92,7 +98,7 @@ namespace KuruKuru
                                 ScreenRotater.Instance.Rotate(KuruKuru.Rotations.LEFT);
                             else if (modifyKeys)
                             {
-                                ModifyArrowKey(VK_LEFT);
+                                ModifyArrowKey(VK_LEFT, true);
                                 return new IntPtr(1);
                             }
                             break;
@@ -101,7 +107,7 @@ namespace KuruKuru
                                 ScreenRotater.Instance.Rotate(KuruKuru.Rotations.RIGHT);
                             else if (modifyKeys)
                             {
-                                ModifyArrowKey(VK_RIGHT);
+                                ModifyArrowKey(VK_RIGHT, true);
                                 return new IntPtr(1);
                             }
                             break;
@@ -110,13 +116,13 @@ namespace KuruKuru
                                 ScreenRotater.Instance.Rotate(KuruKuru.Rotations.BOTTOM);
                             else if (modifyKeys)
                             {
-                                ModifyArrowKey(VK_DOWN);
+                                ModifyArrowKey(VK_DOWN, true);
                                 return new IntPtr(1);
                             }
                             break;
                     }
                 }
-                else if ((KeyMessages)wParam == KeyMessages.WM_KEYUP)
+                else if ((KeyMessages)wParam == KeyMessages.WM_KEYUP || (KeyMessages)wParam == KeyMessages.WM_SYSKEYUP)
                 {
                     switch (hookStruct.vkCode)
                     {
@@ -138,17 +144,62 @@ namespace KuruKuru
                         case VK_RSHIFT:
                             rShiftMod = false;
                             break;
+                        case VK_UP:
+                            if (ctrlMod && altMod && !shiftMod)
+                            {
+                                //ScreenRotater.Instance.Rotate(KuruKuru.Rotations.TOP);
+                            }
+                            else if (modifyKeys)
+                            {
+                                ModifyArrowKey(VK_UP, false);
+                                return new IntPtr(1);
+                            }
+                            break;
+                        case VK_LEFT:
+                            if (ctrlMod && altMod && !shiftMod)
+                            {
+                                //ScreenRotater.Instance.Rotate(KuruKuru.Rotations.LEFT);
+                            }
+                            else if (modifyKeys)
+                            {
+                                ModifyArrowKey(VK_LEFT, false);
+                                return new IntPtr(1);
+                            }
+                            break;
+                        case VK_RIGHT:
+                            if (ctrlMod && altMod && !shiftMod)
+                            {
+                                //ScreenRotater.Instance.Rotate(KuruKuru.Rotations.RIGHT);
+                            }
+                            else if (modifyKeys)
+                            {
+                                ModifyArrowKey(VK_RIGHT, false);
+                                return new IntPtr(1);
+                            }
+                            break;
+                        case VK_DOWN:
+                            if (ctrlMod && altMod && !shiftMod)
+                            {
+                                //ScreenRotater.Instance.Rotate(KuruKuru.Rotations.BOTTOM);
+                            }
+                            else if (modifyKeys)
+                            {
+                                ModifyArrowKey(VK_DOWN, false);
+                                return new IntPtr(1);
+                            }
+                            break;
                     }
                 }
                 ctrlMod = rCtrlMod || lCtrlMod;
                 altMod = rAltMod || lAltMod;
                 shiftMod = rShiftMod || lShiftMod;
+                KuruKuru.DisplayMods(ctrlMod, altMod, shiftMod);
             }
             return hook.CallNextHook(nCode, wParam, lParam);
         }
 
         //translates arrow key based on orientation, then emulates pressing that key
-        private static void ModifyArrowKey(uint arrow)
+        private static void ModifyArrowKey(uint arrow, bool isDown)
         {
             uint newArrow = arrow;
             switch (KuruKuru.CurrentRotation)
@@ -169,12 +220,18 @@ namespace KuruKuru
             if (newArrow > 0x28)
                 newArrow = 0x24 + (newArrow % 0x28);
 
-            keybd_event((byte)newArrow, ArrowScanCode(newArrow), 0, 0);
-            keybd_event((byte)newArrow, ArrowScanCode(newArrow), KEYEVENTF_KEYUP, 0);
+            uint scancode = ArrowScanCode(newArrow);
+
+            KuruKuru.DisplayKeyModInfo(newArrow, scancode);
+
+            if (isDown)
+                keybd_event((byte)newArrow, (byte)scancode, 0, 0);
+            else
+                keybd_event((byte)newArrow, (byte)scancode, KEYEVENTF_KEYUP, 0);
         }
 
         //given a vk code, return appropriate scan code
-        private static byte ArrowScanCode(uint vk)
+        private static uint ArrowScanCode(uint vk)
         {
             switch (vk)
             {
@@ -210,17 +267,17 @@ namespace KuruKuru
         private const uint VK_DOWN = 0x28;
 
         //scancodes
-        private const byte SCAN_UP = 0x48;
-        private const byte SCAN_LEFT = 0x4B;
-        private const byte SCAN_RIGHT = 0x4D;
-        private const byte SCAN_DOWN = 0x50;
+        private const uint SCAN_UP = 0x48;
+        private const uint SCAN_LEFT = 0x4B;
+        private const uint SCAN_RIGHT = 0x4D;
+        private const uint SCAN_DOWN = 0x50;
 
         private enum KeyMessages
         {    
             WM_KEYDOWN = 0x100,
             WM_KEYUP = 0x101,
-            WM_SYSKEYUP = 0x102,
-            WM_SYSKEYDOWN = 0x103
+            WM_SYSKEYDOWN = 0x104,
+            WM_SYSKEYUP = 0x105
         }
 
         [StructLayout(LayoutKind.Sequential)]

@@ -70,6 +70,31 @@ namespace KuruKuru
             }
         }
 
+        public void DisplayKeyInfo(uint vk, uint sc, uint flags)
+        {
+            vkCodeLbl.Text = "0x" + vk.ToString("X");
+            scLbl.Text = "0x" + sc.ToString("X");
+            flagsLbl.Text = "0x" + flags.ToString("X");
+        }
+
+        public void DisplayMods(bool ctrl, bool alt, bool shift)
+        {
+            ctrlLbl.Text = ctrl.ToString();
+            altLbl.Text = alt.ToString();
+            shiftLbl.Text = shift.ToString();
+        }
+
+        public void DisplayKeyModInfo(uint vkm, uint scm)
+        {
+            vkmLbl.Text = "0x" + vkm.ToString("X");
+            scmLbl.Text = "0x" + scm.ToString("X");
+        }
+
+        public void DisplayMisc(string misc)
+        {
+            miscLbl.Text = misc;
+        }
+
         private void rotateRBtn_Click(object sender, EventArgs e)
         {
             ScreenRotater.Instance.Rotate(KuruKuru.Rotations.RIGHT);
